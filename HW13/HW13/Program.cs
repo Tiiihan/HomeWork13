@@ -31,7 +31,7 @@ while (!isEnd)
 			break;
 
 		case UserChoice.ChangeStatusOfTask:
-			ChangeStatusOfTasks(tasks, statusOfTasks, taskCount);
+			ChangeStatusOfTask(tasks, statusOfTasks, taskCount);
 			break;
 		case UserChoice.DeleteTask:
 			(tasks, statusOfTasks) = DeleteTask(tasks, statusOfTasks, ref taskCount);
@@ -82,7 +82,7 @@ static void PrintAllTasks(string[] tasks, StatusOfTask[] statusOfTasks, int task
 		Console.WriteLine($"#{i + 1}. {tasks[i],-15} {statusOfTasks[i]}");
 }
 
-static void ChangeStatusOfTasks(string[] tasks, StatusOfTask[] statusOfTasks, int taskCount)
+static void ChangeStatusOfTask(string[] tasks, StatusOfTask[] statusOfTasks, int taskCount)
 {
 	if (taskCount == 0)
 	{
