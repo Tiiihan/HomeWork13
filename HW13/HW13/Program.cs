@@ -2,12 +2,13 @@
 //Виведення всіх справ: Реалізуйте функцію, яка виводить на екран усі справи зі списку.
 //Відмітка про виконання: Додайте можливість позначити справу як виконану. Користувач повинен ввести номер справи, яку він хоче відмітити.
 //Видалення справи: Напишіть функцію, яка дозволяє видалити справу зі списку. Користувач повинен ввести номер справи для видалення.
-
 using System.Text;
+using System.Threading.Tasks;
 
 const int TASKS = 100;
 int userChoice = 0;
 bool isEnd = false;
+int taskCount = 0;
 
 StringBuilder listOfTasks = new StringBuilder();
 StatusOfTask[] statusOfTasks = new StatusOfTask[TASKS];
@@ -18,62 +19,151 @@ while (!isEnd)
 
 	userChoice = int.Parse(Console.ReadLine());
 
-	switch (userChoice)
+	string[] tasks = listOfTasks.ToString().Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+	switch ((UserChoice)userChoice)
 	{
-		case 1:
-			AddTask(listOfTasks);
-			string[] tasks = listOfTasks.ToString().Split(",");
+		case UserChoice.AddTask:
+			AddTask(listOfTasks, statusOfTasks, ref taskCount);
 			break;
-		case 2:
-			tasks = listOfTasks.ToString().Split(",");
-			PrintAllTasks(tasks, statusOfTasks);
+		case UserChoice.PrintAllTask:
+			PrintAllTasks(tasks, statusOfTasks, taskCount);
 			break;
 
-		case 3:
-			tasks = listOfTasks.ToString().Split(",");
-			ChangeStatusOfTasks(tasks, statusOfTasks);
+		case UserChoice.ChangeStatusOfTask:
+			ChangeStatusOfTasks(tasks, statusOfTasks, taskCount);
 			break;
-		case 4:
-			tasks = listOfTasks.ToString().Split(",");
-			(tasks, statusOfTasks) = DeleteTask(tasks, statusOfTasks);
+		case UserChoice.DeleteTask:
+			(tasks, statusOfTasks) = DeleteTask(tasks, statusOfTasks, ref taskCount);
 
 			listOfTasks.Clear();
-			for (int i = 0; i < tasks.Length; i++)
+			for (int i = 0; i < taskCount; i++)
 			{
 				if (i > 0)
 					listOfTasks.Append(",");
 				listOfTasks.Append(tasks[i]);
 			}
 			break;
-		case 5:
+		case UserChoice.Exit:
 			isEnd = true;
 			break;
 	}
 }
 
 
-static StringBuilder AddTask(StringBuilder listOfTasks)
+static void AddTask(StringBuilder listOfTasks, StatusOfTask[] statusOfTasks, ref int taskCount)
 {
-	Console.Write("\nEnter name of your task: ");
-	string newTask = Console.ReadLine();
+	if (taskCount >= statusOfTasks.Length)
+	{
+		Console.WriteLine("You reached the task limit!");
+		return;
+	}
+
+	string newTask = CheckUserInput();
 
 	if (listOfTasks.Length > 0)
 		listOfTasks.Append(",");
 
 	listOfTasks.Append(newTask);
 
-	return listOfTasks;
+	statusOfTasks[taskCount] = StatusOfTask.InProgress;
+	taskCount++;
 }
 
-static void PrintAllTasks(string[] tasks, StatusOfTask[] statusOfTasks)
+static void PrintAllTasks(string[] tasks, StatusOfTask[] statusOfTasks, int taskCount)
 {
-	Console.WriteLine($"\n\n");
-	int numberOfTask = 0;
-	for (int i = 0; i < tasks.Length; i++)
-		Console.WriteLine($"#{++numberOfTask} {tasks[i]} \t\t {statusOfTasks[i]}");
+	if (taskCount == 0)
+	{
+		Console.WriteLine("\nNo tasks to display.\n");
+		return;
+	}
+
+	for (int i = 0; i < taskCount; i++)
+		Console.WriteLine($"#{i + 1}. {tasks[i],-15} {statusOfTasks[i]}");
 }
 
-static void ChangeStatusOfTasks(string[] tasks, StatusOfTask[] statusOfTasks)
+static void ChangeStatusOfTasks(string[] tasks, StatusOfTask[] statusOfTasks, int taskCount)
+{
+	if (taskCount == 0)
+	{
+        Console.WriteLine("No task");
+		return;
+	}
+
+	int indexOfTask = CheckUserInputInt2(taskCount);
+
+	statusOfTasks[indexOfTask - 1] = StatusOfTask.Done;
+}
+
+static (string[], StatusOfTask[]) DeleteTask(string[] tasks, StatusOfTask[] statusOfTasks, ref int taskCount)
+{
+	if (taskCount == 0)
+	{
+		Console.WriteLine("No task to delete");
+		return (tasks, statusOfTasks);
+	}
+
+	int indexOfTask = CheckUserInputInt(taskCount);
+
+	for (int i = indexOfTask; i < taskCount - 1; i++)
+	{
+		tasks[i] = tasks[i + 1];
+		statusOfTasks[i] = statusOfTasks[i + 1];
+	}
+
+	taskCount--;
+
+	string[] updatedTasks = new string[taskCount];
+	for (int i = 0; i < taskCount; i++)
+		updatedTasks[i] = tasks[i];
+
+	return (updatedTasks, statusOfTasks);
+}
+
+static string CheckUserInput()
+{
+	bool isEmpty = true;
+	string newTask = "";
+	while (isEmpty)
+	{
+		Console.Write("\nEnter name of your task: ");
+		newTask = Console.ReadLine();
+
+		if (string.IsNullOrWhiteSpace(newTask))
+		{
+			Console.Write("Task name can`t be empty, enter again: ");
+			newTask = Console.ReadLine();
+		}
+		else
+		{
+			isEmpty = false;
+			return newTask;
+		} 
+	}
+	return newTask;
+}
+static int CheckUserInputInt(int taskCount)
+{
+	int indexOfTask = 0;
+	bool isRightValue = false;
+
+	while (!isRightValue)
+	{
+		Console.Write("\nEnter number of task to delete: ");
+		isRightValue = int.TryParse(Console.ReadLine(), out indexOfTask);
+
+		if (!isRightValue || indexOfTask <= 0 || indexOfTask > taskCount)
+		{
+			Console.WriteLine("Invalid task number.");
+			isRightValue = false;
+		}
+	}
+
+	indexOfTask--;
+
+	return indexOfTask;
+}
+static int CheckUserInputInt2(int taskCount)
 {
 	bool isInt = false;
 	int indexOfTask = 0;
@@ -82,53 +172,25 @@ static void ChangeStatusOfTasks(string[] tasks, StatusOfTask[] statusOfTasks)
 	{
 		Console.Write("\nEnter number of task, which you wnat to mark as done: ");
 		isInt = int.TryParse(Console.ReadLine(), out indexOfTask);
-	}
 
-	indexOfTask -= 1;
-
-	for (int i = 0; i < tasks.Length; i++)
-	{
-		if (indexOfTask == i)
-			statusOfTasks[i] = StatusOfTask.Done;
+		if (!isInt || indexOfTask <= 0 || indexOfTask > taskCount)
+		{
+			Console.WriteLine("Invalid task number.");
+			isInt = false;
+		}
 	}
+	return indexOfTask;
 }
-
-static (string[], StatusOfTask[]) DeleteTask(string[] tasks, StatusOfTask[] statusOfTasks)
-{
-	int indexOfTask = 0;
-	bool isRigthValue = false;
-
-	while (!isRigthValue)
-	{
-		Console.Write("\nEnter number of task which you want to delete: ");
-		isRigthValue = int.TryParse(Console.ReadLine(), out indexOfTask);
-
-		if (indexOfTask < 0 && indexOfTask >= tasks.Length)
-			isRigthValue = false;
-
-		indexOfTask -= 1;
-	}
-
-	string[] updatedListOfTask = new string[tasks.Length - 1];
-	StatusOfTask[] updatedStatusOfTasks = new StatusOfTask[tasks.Length - 1];
-
-	int indexForNewArr = 0;
-
-	for (int i = 0; i < tasks.Length; i++)
-	{
-		if (indexOfTask == i)
-			continue;
-
-		updatedListOfTask[indexForNewArr] = tasks[i];
-		updatedStatusOfTasks[indexForNewArr] = statusOfTasks[i];
-		indexForNewArr++;
-	}
-
-	return (updatedListOfTask, updatedStatusOfTasks);
-}
-
 enum StatusOfTask
 {
 	InProgress,
 	Done
+}
+enum UserChoice
+{ 
+	AddTask = 1,
+	PrintAllTask,
+	ChangeStatusOfTask,
+	DeleteTask,
+	Exit
 }
