@@ -3,21 +3,28 @@
 //Відмітка про виконання: Додайте можливість позначити справу як виконану. Користувач повинен ввести номер справи, яку він хоче відмітити.
 //Видалення справи: Напишіть функцію, яка дозволяє видалити справу зі списку. Користувач повинен ввести номер справи для видалення.
 using System.Text;
-using System.Threading.Tasks;
 
 const int TASKS = 100;
 int userChoice = 0;
 bool isEnd = false;
 int taskCount = 0;
+bool isInt = false;
 
 StringBuilder listOfTasks = new StringBuilder();
 StatusOfTask[] statusOfTasks = new StatusOfTask[TASKS];
+
+Console.WriteLine($"Max number of tasks is {TASKS}\n");
 
 while (!isEnd)
 {
 	Console.WriteLine("Add task enter 1\nPrint all tasks enter 2\nChange status of task enter 3\nDelete task enter 4\nExit enter 5\n");
 
-	userChoice = int.Parse(Console.ReadLine());
+	isInt = int.TryParse(Console.ReadLine(), out userChoice);
+	if (!isInt || userChoice < (int)UserChoice.AddTask || userChoice > (int)UserChoice.Exit)
+	{
+        Console.WriteLine("Invalid input");
+		continue;
+	}
 
 	string[] tasks = listOfTasks.ToString().Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
@@ -37,6 +44,7 @@ while (!isEnd)
 			(tasks, statusOfTasks) = DeleteTask(tasks, statusOfTasks, ref taskCount);
 
 			listOfTasks.Clear();
+
 			for (int i = 0; i < taskCount; i++)
 			{
 				if (i > 0)
@@ -46,6 +54,9 @@ while (!isEnd)
 			break;
 		case UserChoice.Exit:
 			isEnd = true;
+			break;
+		default:
+            Console.WriteLine("There is no such option, try again\n");
 			break;
 	}
 }
@@ -59,7 +70,7 @@ static void AddTask(StringBuilder listOfTasks, StatusOfTask[] statusOfTasks, ref
 		return;
 	}
 
-	string newTask = CheckUserInput();
+	string newTask = CheckUserInputString();
 
 	if (listOfTasks.Length > 0)
 		listOfTasks.Append(",");
@@ -90,9 +101,9 @@ static void ChangeStatusOfTask(string[] tasks, StatusOfTask[] statusOfTasks, int
 		return;
 	}
 
-	int indexOfTask = CheckUserInputInt2(taskCount);
+	int indexOfTask = CheckUserInputInt("\nEnter number of task, which you want to mark as done: ", taskCount);
 
-	statusOfTasks[indexOfTask - 1] = StatusOfTask.Done;
+	statusOfTasks[indexOfTask] = StatusOfTask.Done;
 }
 
 static (string[], StatusOfTask[]) DeleteTask(string[] tasks, StatusOfTask[] statusOfTasks, ref int taskCount)
@@ -103,7 +114,7 @@ static (string[], StatusOfTask[]) DeleteTask(string[] tasks, StatusOfTask[] stat
 		return (tasks, statusOfTasks);
 	}
 
-	int indexOfTask = CheckUserInputInt(taskCount);
+	int indexOfTask = CheckUserInputInt("\nEnter number of task to delete: ", taskCount);
 
 	for (int i = indexOfTask; i < taskCount - 1; i++)
 	{
@@ -120,7 +131,7 @@ static (string[], StatusOfTask[]) DeleteTask(string[] tasks, StatusOfTask[] stat
 	return (updatedTasks, statusOfTasks);
 }
 
-static string CheckUserInput()
+static string CheckUserInputString()
 {
 	bool isEmpty = true;
 	string newTask = "";
@@ -130,10 +141,7 @@ static string CheckUserInput()
 		newTask = Console.ReadLine();
 
 		if (string.IsNullOrWhiteSpace(newTask))
-		{
 			Console.Write("Task name can`t be empty, enter again: ");
-			newTask = Console.ReadLine();
-		}
 		else
 		{
 			isEmpty = false;
@@ -142,14 +150,15 @@ static string CheckUserInput()
 	}
 	return newTask;
 }
-static int CheckUserInputInt(int taskCount)
+
+static int CheckUserInputInt(string message, int taskCount)
 {
 	int indexOfTask = 0;
 	bool isRightValue = false;
 
 	while (!isRightValue)
 	{
-		Console.Write("\nEnter number of task to delete: ");
+		Console.Write(message);
 		isRightValue = int.TryParse(Console.ReadLine(), out indexOfTask);
 
 		if (!isRightValue || indexOfTask <= 0 || indexOfTask > taskCount)
@@ -162,35 +171,4 @@ static int CheckUserInputInt(int taskCount)
 	indexOfTask--;
 
 	return indexOfTask;
-}
-static int CheckUserInputInt2(int taskCount)
-{
-	bool isInt = false;
-	int indexOfTask = 0;
-
-	while (!isInt)
-	{
-		Console.Write("\nEnter number of task, which you wnat to mark as done: ");
-		isInt = int.TryParse(Console.ReadLine(), out indexOfTask);
-
-		if (!isInt || indexOfTask <= 0 || indexOfTask > taskCount)
-		{
-			Console.WriteLine("Invalid task number.");
-			isInt = false;
-		}
-	}
-	return indexOfTask;
-}
-enum StatusOfTask
-{
-	InProgress,
-	Done
-}
-enum UserChoice
-{ 
-	AddTask = 1,
-	PrintAllTask,
-	ChangeStatusOfTask,
-	DeleteTask,
-	Exit
 }
